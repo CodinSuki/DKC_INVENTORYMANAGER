@@ -1,1 +1,3 @@
-100#Shinai#Available#12/12/2022#1#Good###
+100#Shinai#Available#12/07/2025#1#Good#Box 5#Length: 39", Weight: 1KG, Material: Bamboo#
+101#Men#Borrowed#12/12/2025#2#Fair#Box 1#Size: 65, Padding Type: 6mm, Borrower Name: Joshua#
+102#Kote#Borrowed#DD/MM/YYYY#1#New#Box 2#Glove Size: S, Borrower Name: Remotig#

@@ -10,7 +10,7 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
     private JTextField txtID, txtDate, txtLocation;
     private JComboBox<String> cboType, cboStatus, cboCondition;
     private JSpinner spinnerQuantity;
-    private JButton btnAdd, btnClear, btnUpdate, btnDelete, btnClose;
+    private JButton btnAdd, btnClear, btnUpdate, btnDelete, btnClose, btnFilter;
     private JPanel panelButton, panelTable, panelKendoInfo, panelDynamicFields;
 
     private Database db = new Database("kendo_inventory.txt");
@@ -18,15 +18,19 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
     private JTable tblKendo;
     private DefaultTableModel model_Kendo;
     private Vector columns, rowData;
-
     private java.util.List<JTextField> additionalFields = new ArrayList<>();
 
+    private JTextField txtBorrowerName; // Borrower field only when borrowed
+
     public MainProgram() {
+        ImageIcon icon = new ImageIcon("src/IMAGES/logo_davao.png");
+        setIconImage(icon.getImage());
         initializedComponents();
         KendoInfo();
+        cboStatus.addActionListener(e -> handleStatusChange());
         panelKendoButton();
-
         panelTable = panelKendoTable();
+
         txtID.setText(getRowCount());
 
         JPanel leftPanel = new JPanel();
@@ -47,6 +51,7 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
         btnUpdate.addActionListener(this);
         btnDelete.addActionListener(this);
         btnClose.addActionListener(this);
+        btnFilter.addActionListener(this);
 
         tblKendo.addMouseListener(this);
         addWindowListener(this);
@@ -68,8 +73,10 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
         lblCondition = new JLabel("Condition:");
         lblLocation = new JLabel("Storage Location:");
 
-        txtID = new JTextField(20); txtID.setEditable(false);
-        txtDate = new JTextField(10); txtLocation = new JTextField(15);
+        txtID = new JTextField(20);
+        txtID.setEditable(false);
+        txtDate = new JTextField(10);
+        txtLocation = new JTextField(15);
 
         cboType = new JComboBox<>();
         cboStatus = new JComboBox<>();
@@ -100,17 +107,24 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
         panelKendoInfo.setBorder(BorderFactory.createTitledBorder("Kendo Equipment Registration"));
         panelKendoInfo.setMaximumSize(new Dimension(400, 300));
 
-        panelKendoInfo.add(lblID); panelKendoInfo.add(txtID);
-        panelKendoInfo.add(lblType); panelKendoInfo.add(cboType);
-        panelKendoInfo.add(lblStatus); panelKendoInfo.add(cboStatus);
-        panelKendoInfo.add(lblDate); panelKendoInfo.add(txtDate);
-        panelKendoInfo.add(lblQuantity); panelKendoInfo.add(spinnerQuantity);
-        panelKendoInfo.add(lblCondition); panelKendoInfo.add(cboCondition);
-        panelKendoInfo.add(lblLocation); panelKendoInfo.add(txtLocation);
+        panelKendoInfo.add(lblID);
+        panelKendoInfo.add(txtID);
+        panelKendoInfo.add(lblType);
+        panelKendoInfo.add(cboType);
+        panelKendoInfo.add(lblStatus);
+        panelKendoInfo.add(cboStatus);
+        panelKendoInfo.add(lblDate);
+        panelKendoInfo.add(txtDate);
+        panelKendoInfo.add(lblQuantity);
+        panelKendoInfo.add(spinnerQuantity);
+        panelKendoInfo.add(lblCondition);
+        panelKendoInfo.add(cboCondition);
+        panelKendoInfo.add(lblLocation);
+        panelKendoInfo.add(txtLocation);
 
-        panelDynamicFields = new JPanel(new GridLayout(4, 2, 5, 5));
+        panelDynamicFields = new JPanel(new GridLayout(5, 2, 5, 5)); // increased rows to 5 for borrower
         panelDynamicFields.setBorder(BorderFactory.createTitledBorder("Additional Info"));
-        panelDynamicFields.setMaximumSize(new Dimension(400, 180));
+        panelDynamicFields.setMaximumSize(new Dimension(400, 200));
     }
 
     public void panelKendoButton() {
@@ -122,10 +136,14 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
         btnUpdate = new JButton("Update");
         btnDelete = new JButton("Delete");
         btnClose = new JButton("Close");
+        btnFilter = new JButton("Filter");
 
-        panelButton.add(btnAdd); panelButton.add(btnClear);
-        panelButton.add(btnUpdate); panelButton.add(btnDelete);
+        panelButton.add(btnAdd);
+        panelButton.add(btnClear);
+        panelButton.add(btnUpdate);
+        panelButton.add(btnDelete);
         panelButton.add(btnClose);
+        panelButton.add(btnFilter);
     }
 
     public void resetComponents() {
@@ -135,6 +153,7 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
         btnClose.setEnabled(true);
         btnUpdate.setEnabled(true);
         btnDelete.setEnabled(true);
+        btnFilter.setEnabled(true);
 
         txtLocation.setText("");
         txtDate.setText("DD/MM/YYYY");
@@ -142,6 +161,7 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
         cboStatus.setSelectedIndex(0);
         cboCondition.setSelectedIndex(0);
         spinnerQuantity.setValue(1);
+        handleStatusChange();
 
         updateTypeSpecificFields("Select Type");
     }
@@ -175,9 +195,9 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
             case "Tare":
                 addDynamicField("Waist Size:");
                 break;
-            default:
-                break;
         }
+
+        handleStatusChange();
 
         panelDynamicFields.revalidate();
         panelDynamicFields.repaint();
@@ -223,24 +243,38 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
         rowData.add(txtLocation.getText());
 
         StringBuilder additionalInfo = new StringBuilder();
-
         String selectedType = (String) cboType.getSelectedItem();
-
         String[] labels;
+
         switch (selectedType) {
-            case "Shinai": labels = new String[]{"Length", "Weight", "Material"}; break;
-            case "Men": labels = new String[]{"Size", "Padding Type"}; break;
-            case "Kote": labels = new String[]{"Glove Size"}; break;
-            case "Dō": labels = new String[]{"Chest Size"}; break;
-            case "Tare": labels = new String[]{"Waist Size"}; break;
-            default: labels = new String[]{}; break;
+            case "Shinai":
+                labels = new String[]{"Length", "Weight", "Material"};
+                break;
+            case "Men":
+                labels = new String[]{"Size", "Padding Type"};
+                break;
+            case "Kote":
+                labels = new String[]{"Glove Size"};
+                break;
+            case "Dō":
+                labels = new String[]{"Chest Size"};
+                break;
+            case "Tare":
+                labels = new String[]{"Waist Size"};
+                break;
+            default:
+                labels = new String[]{};
+                break;
         }
 
         for (int i = 0; i < additionalFields.size(); i++) {
             String value = additionalFields.get(i).getText().trim();
             if (!value.isEmpty()) {
                 if (additionalInfo.length() > 0) additionalInfo.append(", ");
-                if (i < labels.length) {
+                // If this is the borrower name field, label it explicitly
+                if (txtBorrowerName != null && additionalFields.get(i) == txtBorrowerName) {
+                    additionalInfo.append("Borrower Name: ").append(value);
+                } else if (i < labels.length) {
                     additionalInfo.append(labels[i]).append(": ").append(value);
                 } else {
                     additionalInfo.append(value);
@@ -252,20 +286,18 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
     }
 
     public void process() {
-        String records = "";
+        StringBuilder records = new StringBuilder();
         for (int r = 0; r < model_Kendo.getRowCount(); r++) {
             for (int c = 0; c < model_Kendo.getColumnCount(); c++) {
-                records += model_Kendo.getValueAt(r, c) + "#";
+                records.append(model_Kendo.getValueAt(r, c)).append("#");
             }
-            records += "\n";
+            records.append("\n");
         }
-        db.storeToFile(records);
+        db.storeToFile(records.toString());
     }
 
     private void fillAdditionalFields(String type, String additionalInfo) {
-        for (JTextField field : additionalFields) {
-            field.setText("");
-        }
+        for (JTextField field : additionalFields) field.setText("");
         if (additionalInfo == null || additionalInfo.equals("N/A") || additionalInfo.trim().isEmpty()) return;
 
         String[] parts = additionalInfo.split(",\\s*");
@@ -279,20 +311,73 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
 
         String[] labels;
         switch (type) {
-            case "Shinai": labels = new String[]{"Length", "Weight", "Material"}; break;
-            case "Men": labels = new String[]{"Size", "Padding Type"}; break;
-            case "Kote": labels = new String[]{"Glove Size"}; break;
-            case "Dō": labels = new String[]{"Chest Size"}; break;
-            case "Tare": labels = new String[]{"Waist Size"}; break;
-            default: labels = new String[]{}; break;
+            case "Shinai":
+                labels = new String[]{"Length", "Weight", "Material"};
+                break;
+            case "Men":
+                labels = new String[]{"Size", "Padding Type"};
+                break;
+            case "Kote":
+                labels = new String[]{"Glove Size"};
+                break;
+            case "Dō":
+                labels = new String[]{"Chest Size"};
+                break;
+            case "Tare":
+                labels = new String[]{"Waist Size"};
+                break;
+            default:
+                labels = new String[]{};
+                break;
         }
 
         for (int i = 0; i < labels.length && i < additionalFields.size(); i++) {
-            String label = labels[i];
-            if (infoMap.containsKey(label)) {
-                additionalFields.get(i).setText(infoMap.get(label));
+            if (infoMap.containsKey(labels[i])) {
+                additionalFields.get(i).setText(infoMap.get(labels[i]));
             }
         }
+
+        // For borrower name, if status is Borrowed, add field and set text
+        if ("Borrowed".equals(cboStatus.getSelectedItem())) {
+            handleStatusChange();
+            if (txtBorrowerName != null && infoMap.containsKey("Borrower Name")) {
+                txtBorrowerName.setText(infoMap.get("Borrower Name"));
+            }
+        } else {
+            handleStatusChange();
+        }
+    }
+
+    private void FilterMethod() {
+
+    }
+
+    private void handleStatusChange() {
+        // Remove old borrower components if any
+        if (txtBorrowerName != null) {
+            panelDynamicFields.remove(txtBorrowerName);
+            additionalFields.remove(txtBorrowerName);
+            txtBorrowerName = null;
+        }
+        // Remove any borrower label (search and remove)
+        Component[] components = panelDynamicFields.getComponents();
+        for (Component comp : components) {
+            if (comp instanceof JLabel && ((JLabel) comp).getText().equals("Borrower Name:")) {
+                panelDynamicFields.remove(comp);
+                break;
+            }
+        }
+
+        if ("Borrowed".equals(cboStatus.getSelectedItem())) {
+            JLabel lblBorrower = new JLabel("Borrower Name:");
+            txtBorrowerName = new JTextField(10);
+            panelDynamicFields.add(lblBorrower);
+            panelDynamicFields.add(txtBorrowerName);
+            additionalFields.add(txtBorrowerName);
+        }
+
+        panelDynamicFields.revalidate();
+        panelDynamicFields.repaint();
     }
 
     public static void main(String[] args) {
@@ -326,6 +411,8 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
         } else if (e.getSource().equals(btnClose)) {
             process();
             dispose();
+        } else if (e.getSource().equals(btnFilter)) {
+
         }
     }
 
@@ -333,36 +420,45 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
     public void mouseClicked(MouseEvent e) {
         int i = tblKendo.getSelectedRow();
         if (i >= 0) {
-            txtID.setText(tblKendo.getValueAt(i, 0).toString());
-            String type = tblKendo.getValueAt(i, 1).toString();
-            cboType.setSelectedItem(type);
-            cboStatus.setSelectedItem(tblKendo.getValueAt(i, 2).toString());
-            txtDate.setText(tblKendo.getValueAt(i, 3).toString());
-            spinnerQuantity.setValue(Integer.parseInt(tblKendo.getValueAt(i, 4).toString()));
-            cboCondition.setSelectedItem(tblKendo.getValueAt(i, 5).toString());
-            txtLocation.setText(tblKendo.getValueAt(i, 6).toString());
+            txtID.setText(model_Kendo.getValueAt(i, 0).toString());
+            cboType.setSelectedItem(model_Kendo.getValueAt(i, 1));
+            cboStatus.setSelectedItem(model_Kendo.getValueAt(i, 2));
+            txtDate.setText(model_Kendo.getValueAt(i, 3).toString());
+            spinnerQuantity.setValue(Integer.parseInt(model_Kendo.getValueAt(i, 4).toString()));
+            cboCondition.setSelectedItem(model_Kendo.getValueAt(i, 5));
+            txtLocation.setText(model_Kendo.getValueAt(i, 6).toString());
 
-            String addInfoStr = tblKendo.getValueAt(i, 7).toString();
-            fillAdditionalFields(type, addInfoStr);
+            String addInfo = model_Kendo.getValueAt(i, 7).toString();
+            updateTypeSpecificFields((String) cboType.getSelectedItem());
+            fillAdditionalFields((String) cboType.getSelectedItem(), addInfo);
 
             tableClick();
         }
     }
 
-    @Override public void mousePressed(MouseEvent e) { }
-    @Override public void mouseReleased(MouseEvent e) { }
-    @Override public void mouseEntered(MouseEvent e) { }
-    @Override public void mouseExited(MouseEvent e) { }
-    @Override public void keyTyped(KeyEvent e) { }
-    @Override public void keyPressed(KeyEvent e) { }
-    @Override public void keyReleased(KeyEvent e) { }
-    @Override public void windowOpened(WindowEvent e) { }
-    @Override public void windowClosing(WindowEvent e) {
+    //Mouseys
+
+
+    @Override public void mousePressed(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
+
+    // KeyListener
+    @Override public void keyTyped(KeyEvent e) {}
+    @Override public void keyPressed(KeyEvent e) {}
+    @Override public void keyReleased(KeyEvent e) {}
+
+    // WindowListener
+    @Override
+    public void windowClosing(WindowEvent e) {
         process();
+        System.exit(0);
     }
-    @Override public void windowClosed(WindowEvent e) { }
-    @Override public void windowIconified(WindowEvent e) { }
-    @Override public void windowDeiconified(WindowEvent e) { }
-    @Override public void windowActivated(WindowEvent e) { }
-    @Override public void windowDeactivated(WindowEvent e) { }
+    @Override public void windowOpened(WindowEvent e) {}
+    @Override public void windowClosed(WindowEvent e) {}
+    @Override public void windowIconified(WindowEvent e) {}
+    @Override public void windowDeiconified(WindowEvent e) {}
+    @Override public void windowActivated(WindowEvent e) {}
+    @Override public void windowDeactivated(WindowEvent e) {}
 }
