@@ -107,19 +107,10 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
         panelKendoInfo.setBorder(BorderFactory.createTitledBorder("Kendo Equipment Registration"));
         panelKendoInfo.setMaximumSize(new Dimension(400, 300));
 
-        panelKendoInfo.add(lblID);
-        panelKendoInfo.add(txtID);
-        panelKendoInfo.add(lblType);
-        panelKendoInfo.add(cboType);
-        panelKendoInfo.add(lblStatus);
-        panelKendoInfo.add(cboStatus);
-        panelKendoInfo.add(lblDate);
-        panelKendoInfo.add(txtDate);
-        panelKendoInfo.add(lblQuantity);
-        panelKendoInfo.add(spinnerQuantity);
-        panelKendoInfo.add(lblCondition);
-        panelKendoInfo.add(cboCondition);
-        panelKendoInfo.add(lblLocation);
+        panelKendoInfo.add(lblID);panelKendoInfo.add(txtID);panelKendoInfo.add(lblType);panelKendoInfo.add(cboType);
+        panelKendoInfo.add(lblStatus);panelKendoInfo.add(cboStatus);panelKendoInfo.add(lblDate);
+        panelKendoInfo.add(txtDate);panelKendoInfo.add(lblQuantity);panelKendoInfo.add(spinnerQuantity);
+        panelKendoInfo.add(lblCondition);panelKendoInfo.add(cboCondition);panelKendoInfo.add(lblLocation);
         panelKendoInfo.add(txtLocation);
 
         panelDynamicFields = new JPanel(new GridLayout(5, 2, 5, 5)); // increased rows to 5 for borrower
@@ -138,12 +129,9 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
         btnClose = new JButton("Close");
         btnFilter = new JButton("Filter");
 
-        panelButton.add(btnAdd);
-        panelButton.add(btnClear);
-        panelButton.add(btnUpdate);
-        panelButton.add(btnDelete);
-        panelButton.add(btnClose);
-        panelButton.add(btnFilter);
+        panelButton.add(btnAdd);panelButton.add(btnClear);
+        panelButton.add(btnUpdate);panelButton.add(btnDelete);
+        panelButton.add(btnClose);panelButton.add(btnFilter);
     }
 
     public void resetComponents() {
@@ -412,7 +400,7 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
             process();
             dispose();
         } else if (e.getSource().equals(btnFilter)) {
-
+                new FilterWindow(this, model_Kendo);
         }
     }
 
