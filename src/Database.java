@@ -3,7 +3,7 @@ import java.util.*;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
-public class Database {
+public class    Database {
     private File file=null;
     private FileWriter fWrite=null;
     private FileReader fRead=null;
@@ -43,22 +43,25 @@ public class Database {
         }
     }//end of storeToFile
 
-    public void displayRecords(DefaultTableModel model){
+    public void displayRecords(DefaultTableModel model) {
         try {
-                fRead = new FileReader(file);
-                scan = new Scanner(fRead);
+            fRead = new FileReader(file);
+            scan = new Scanner(fRead);
 
-                String data[];
-                while (scan.hasNext()) {
-                    data = scan.nextLine().split("#");
-                    row = new Vector<String>();
-                    for (int i = 0; i < model.getColumnCount(); i++){
-                        row.add(data[i]);
-                    }
+            String[] data;
+            while (scan.hasNextLine()) {
+                data = scan.nextLine().split("#");
+                row = new Vector<>();
+                for (int i = 0; i < model.getColumnCount() && i < data.length; i++) {
+                    row.add(data[i]);
                 }
                 model.addRow(row);
-            }catch (Exception e){
-                errorMessage("Error 102:" + e.getMessage());
+            }
+
+            fRead.close(); // Always good to close streams
+        } catch (Exception e) {
+            errorMessage("Error 102: " + e.getMessage());
         }
     }
+
 } //end of class

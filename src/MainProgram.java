@@ -4,6 +4,7 @@ import java.awt.event.*;
 import java.util.*;
 import javax.swing.table.DefaultTableModel;
 
+
 public class MainProgram extends MainFrame implements ActionListener, MouseListener, KeyListener, WindowListener {
 
     private JLabel lblID, lblType, lblStatus, lblDate, lblQuantity, lblCondition, lblLocation;
@@ -74,7 +75,7 @@ public class MainProgram extends MainFrame implements ActionListener, MouseListe
         lblLocation = new JLabel("Storage Location:");
 
         txtID = new JTextField(20);
-        txtID.setEditable(false);
+        txtID.setEditable(true);
         txtDate = new JTextField(10);
         txtLocation = new JTextField(15);
 
