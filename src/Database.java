@@ -3,65 +3,74 @@ import java.util.*;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
-public class    Database {
-    private File file=null;
-    private FileWriter fWrite=null;
-    private FileReader fRead=null;
-    private Scanner scan=null;
-    private Vector<String> row, column;
-    public Database() {
-    }
-    /**parameterized constructor w/c sets the filename of a textfile
-     * @author martzel baste
-     * @param filename */
+public class Database {
+    private File file;
+
+    public Database() {}
+
     public Database(String filename) {
-        file=new File(filename);
+        this.file = new File(filename);
     }
-    /**another option for setting a filename
-     * @author martzel baste
-     * @param filename*/
+
     public void setFilename(String filename) {
-        new Database(filename);
+        this.file = new File(filename);
     }
-    /**when you want to read or get the name of the file
-     * @return String - name of the file */
-    public String getFilename() { return file.getName(); }
-    /**universal error message
-     * @param msg */
-    public void errorMessage(String msg){
-        JOptionPane.showMessageDialog(null,msg,"Error",JOptionPane.ERROR_MESSAGE);
+
+    public String getFilename() {
+        return file.getName();
     }
-    /**Store information to a file
-     * @param records - the information to be stored */
-    public void storeToFile(String records){
-        try {
-            fWrite=new FileWriter(file);
-            fWrite.write(records);
-            fWrite.flush();
-        } catch (Exception e) {
-            errorMessage("Error 101: storeToFile\n"+e.getMessage());
+
+    private void errorMessage(String msg) {
+        JOptionPane.showMessageDialog(null, msg, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    /**
+     * Store information to a CSV file
+     * @param records - the information to be stored
+     */
+    public void storeToFile(String records) {
+        try (FileWriter fw = new FileWriter(file)) {
+            fw.write(records);
+        } catch (IOException e) {
+            errorMessage("Error writing to CSV file: " + e.getMessage());
         }
-    }//end of storeToFile
+    }
 
+    /**
+     * Display records from CSV into the table model
+     * @param model - table model to populate
+     */
     public void displayRecords(DefaultTableModel model) {
-        try {
-            fRead = new FileReader(file);
-            scan = new Scanner(fRead);
-
-            String[] data;
-            while (scan.hasNextLine()) {
-                data = scan.nextLine().split("#");
-                row = new Vector<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] data = line.split(",", -1); // keep empty fields
+                Vector<String> row = new Vector<>();
                 for (int i = 0; i < model.getColumnCount() && i < data.length; i++) {
-                    row.add(data[i]);
+                    row.add(data[i].trim().replaceAll("^\"|\"$", "").replace("\"\"", "\""));
                 }
                 model.addRow(row);
             }
-
-            fRead.close(); // Always good to close streams
-        } catch (Exception e) {
-            errorMessage("Error 102: " + e.getMessage());
+        } catch (IOException e) {
+            errorMessage("Error reading CSV file: " + e.getMessage());
         }
     }
 
-} //end of class
+    public List<String> loadColumn(String filename, int colIndex) {
+        List<String> data = new ArrayList<>();
+        try (Scanner sc = new Scanner(new File(filename))) {
+            while (sc.hasNextLine()) {
+                String[] parts = sc.nextLine().split(",");
+                if (parts.length > colIndex) {
+                    String value = parts[colIndex].replace("\"","").trim();
+                    data.add(value);
+                }
+            }
+        } catch (IOException e) {
+            errorMessage("DB error: " + e.getMessage());
+        }
+        return data;
+    }
+
+
+} // end of class
