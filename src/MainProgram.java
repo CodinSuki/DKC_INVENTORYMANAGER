@@ -1,14 +1,20 @@
+    //Kyle Siton
+
+    //GUI handler
     import javax.swing.*;
-    import java.awt.*;
-    import java.awt.event.*;
-    import java.io.File;
-    import java.io.IOException;
-    import java.time.LocalDate;
-    import java.time.format.DateTimeFormatter;
-    import java.util.*;
     import javax.swing.table.DefaultTableModel;
     import com.github.lgooddatepicker.components.DatePicker;
     import com.github.lgooddatepicker.components.DatePickerSettings;
+    import java.awt.*;
+    import java.awt.event.*;
+    //File Handling
+    import java.io.File;
+    import java.io.IOException;
+    //Util
+    import java.time.LocalDate;
+    import java.time.format.DateTimeFormatter;
+    import java.util.*;
+
 
 
 
@@ -87,8 +93,6 @@
             lblCondition = new JLabel("Condition:");
             lblLocation = new JLabel("Storage Location:");
 
-
-
             txtID = new JTextField(20);
             txtID.setEditable(false);
 
@@ -122,7 +126,7 @@
             panelKendoInfo.add(lblCondition);panelKendoInfo.add(cboCondition);panelKendoInfo.add(lblLocation);
             panelKendoInfo.add(txtLocation);
 
-            panelDynamicFields = new JPanel(new GridLayout(5, 2, 5, 5)); // increased rows to 5 for borrower
+            panelDynamicFields = new JPanel(new GridLayout(5, 2, 5, 5));
             panelDynamicFields.setBorder(BorderFactory.createTitledBorder("Additional Info"));
             panelDynamicFields.setMaximumSize(new Dimension(400, 200));
         }
@@ -273,14 +277,13 @@
                     break;
             }
 
+
             for (int i = 0; i < additionalFields.size(); i++) {
                 String value = additionalFields.get(i).getText().trim();
                 if (!value.isEmpty()) {
                     if (additionalInfo.length() > 0) additionalInfo.append(", ");
-                    // If this is the borrower name field, label it explicitly
-                    if (txtBorrowerName != null && additionalFields.get(i) == txtBorrowerName) {
-                        additionalInfo.append("Borrower Name: ").append(value);
-                    } else if (i < labels.length) {
+
+                    if  (i < labels.length) {
                         additionalInfo.append(labels[i]).append(": ").append(value);
                     } else {
                         additionalInfo.append(value);

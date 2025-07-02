@@ -17,7 +17,7 @@ import com.github.lgooddatepicker.components.DatePickerSettings;
 
 public class BorrowerWindow extends JFrame implements ActionListener {
     private MainProgram mainProgram;
-
+    
     private JComboBox<String> cboPractitioner, cboItem;
     private JSpinner spinnerQuantity;
     private JTextField txtDate;
@@ -26,7 +26,7 @@ public class BorrowerWindow extends JFrame implements ActionListener {
     private JButton btnBorrow, btnReturn, btnCancel, btnBack;
     private JTable tblBorrow;
     private DefaultTableModel model;
-    private JPanel infoPanel, formPanel;
+    private JPanel infoPanel;
 
     private final String PRACT_FILE = "practitioners.csv";
     private final String INV_FILE = "kendo_inventory.csv";
@@ -123,7 +123,6 @@ public class BorrowerWindow extends JFrame implements ActionListener {
         add(scrollPane, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        cboItem.addActionListener(e -> updateSpinner());
     }
 
     public BorrowerWindow(MainProgram mainProgram) {
@@ -189,11 +188,11 @@ public class BorrowerWindow extends JFrame implements ActionListener {
                 if (parts.length >= 3) {
                     String id = parts[0].replace("\"", "").trim();
                     if (id.equals(itemID)) {
-                        parts[2] = "\"Borrowed\""; // Ensure quotes around new status
+                        parts[2] = "\"Borrowed\"";
                     }
                     updatedLines.add(String.join(",", parts));
                 } else {
-                    updatedLines.add(line); // Add line unchanged if unexpected format
+                    updatedLines.add(line); //
                 }
             }
             reader.close();
@@ -212,7 +211,7 @@ public class BorrowerWindow extends JFrame implements ActionListener {
 
 
     private void loadBorrowLog() {
-        model.setRowCount(0); // Clear table before loading
+        model.setRowCount(0); //Table claear
         try (BufferedReader br = new BufferedReader(new FileReader(BORROW_LOG))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -231,7 +230,7 @@ public class BorrowerWindow extends JFrame implements ActionListener {
             e.printStackTrace();
         }
 
-        checkOverdueRows(); // Refresh row highlights
+        checkOverdueRows();
     }
 
     private void loadPractitioners() {
@@ -333,15 +332,6 @@ public class BorrowerWindow extends JFrame implements ActionListener {
         }
 
         loadItems();
-    }
-
-    private void appendLog(String prac, String item, int qty, String returnDate) {
-        String entry = String.join(",", prac, item, String.valueOf(qty), txtDate.getText(), returnDate);
-        try (FileWriter fw = new FileWriter(BORROW_LOG, true)) {
-            fw.write(entry + "\n");
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
     }
 
 

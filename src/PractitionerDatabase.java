@@ -46,10 +46,18 @@ public class PractitionerDatabase {
         long daysAttended = calculateDaysAttended(startDate);
         String eligibility = checkRankUpEligibility(rank, daysAttended);
 
-        String entry = String.join(",", id, name, String.valueOf(age), rank, startDate,
+        // Escape gearSizes and other fields that might contain commas
+        String escapedGearSizes = escapeCommas(gearSizes);
+        String entry = String.join(",",
+                id,
+                escapeCommas(name),
+                String.valueOf(age),
+                escapeCommas(rank),
+                startDate,
                 String.valueOf(daysAttended),
-                gearSizes.isEmpty() ? "N/A" : gearSizes,
-                eligibility);
+                escapedGearSizes,
+                eligibility
+        );
 
         try (FileWriter fw = new FileWriter(FILE_PATH, true)) {
             fw.write(entry + "\n");
@@ -65,12 +73,14 @@ public class PractitionerDatabase {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (!line.trim().isEmpty()) {
-                    String[] raw = line.split(",");
-                    List<String> row = new ArrayList<>(Arrays.asList(raw));
-
-                    // Padding if missing
-                    while (row.size() < 8) row.add("N/A");
-                    data.add(row.toArray(new String[0]));
+                    String[] row = parseCSVLine(line);
+                    if (row.length < 8) {
+                        row = Arrays.copyOf(row, 8);
+                        for (int i = 0; i < 8; i++) {
+                            if (row[i] == null) row[i] = "N/A";
+                        }
+                    }
+                    data.add(row);
                 }
             }
         } catch (IOException e) {
@@ -79,7 +89,7 @@ public class PractitionerDatabase {
         return data;
     }
 
-    private long calculateDaysAttended(String dateStr) {
+    protected long calculateDaysAttended(String dateStr) {
         try {
             LocalDate start = LocalDate.parse(dateStr, FORMATTER);
             return ChronoUnit.DAYS.between(start, LocalDate.now());
@@ -88,7 +98,7 @@ public class PractitionerDatabase {
         }
     }
 
-    private String checkRankUpEligibility(String rank, long daysAttended) {
+    protected String checkRankUpEligibility(String rank, long daysAttended) {
         switch (rank.toLowerCase()) {
             case "beginner": return daysAttended >= 90 ? "Yes" : "No";
             case "intermediate": return daysAttended >= 180 ? "Yes" : "No";
@@ -109,5 +119,33 @@ public class PractitionerDatabase {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private String escapeCommas(String value) {
+        if (value.contains(",")) {
+            return '"' + value.replace("\"", "\"\"") + '"';
+        }
+        return value;
+    }
+
+    private String[] parseCSVLine(String line) {
+        List<String> tokens = new ArrayList<>();
+        boolean inQuotes = false;
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
+                tokens.add(sb.toString().trim());
+                sb.setLength(0);
+            } else {
+                sb.append(c);
+            }
+        }
+        tokens.add(sb.toString().trim());
+
+        return tokens.toArray(new String[0]);
     }
 }

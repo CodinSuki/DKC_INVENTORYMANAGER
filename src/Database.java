@@ -12,22 +12,10 @@ public class Database {
         this.file = new File(filename);
     }
 
-    public void setFilename(String filename) {
-        this.file = new File(filename);
-    }
-
-    public String getFilename() {
-        return file.getName();
-    }
-
     private void errorMessage(String msg) {
         JOptionPane.showMessageDialog(null, msg, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    /**
-     * Store information to a CSV file
-     * @param records - the information to be stored
-     */
     public void storeToFile(String records) {
         try (FileWriter fw = new FileWriter(file)) {
             fw.write(records);
@@ -36,15 +24,12 @@ public class Database {
         }
     }
 
-    /**
-     * Display records from CSV into the table model
-     * @param model - table model to populate
-     */
+
     public void displayRecords(DefaultTableModel model) {
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] data = line.split(",", -1); // keep empty fields
+                String[] data = line.split(",", -1);
                 Vector<String> row = new Vector<>();
                 for (int i = 0; i < model.getColumnCount() && i < data.length; i++) {
                     row.add(data[i].trim().replaceAll("^\"|\"$", "").replace("\"\"", "\""));
@@ -73,4 +58,4 @@ public class Database {
     }
 
 
-} // end of class
+}

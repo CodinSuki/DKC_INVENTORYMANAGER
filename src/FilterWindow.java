@@ -13,7 +13,7 @@ public class FilterWindow extends JDialog {
         super(parent, "Filter Kendo Equipment", true);
         this.model_Kendo = model_Kendo;
 
-        // Backup original model
+
         originalModel = new DefaultTableModel();
         for (int i = 0; i < model_Kendo.getColumnCount(); i++) {
             originalModel.addColumn(model_Kendo.getColumnName(i));

@@ -2,9 +2,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.table.DefaultTableModel;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Vector;
 import java.util.List;
 
@@ -15,8 +12,6 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
     private DefaultTableModel model_Practitioners;
     private Vector<String> columns;
     private PractitionerDatabase db = new PractitionerDatabase();
-
-    private int practitionerCount = 1;
 
     public PractitionerWindow() {
         setTitle("Practitioner List - DKC Inventory Manager");
@@ -74,9 +69,27 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
 
         List<String[]> records = db.loadAllPractitioners();
         for (String[] row : records) {
+            if (row.length < 8) continue;
+
+            String id = row[0].trim();
+            String name = row[1].trim();
+            String age = row[2].trim();
+            String rank = row[3].trim();
+            String startDate = row[4].trim();
+            String daysAttended = row[5].trim();
+            String gearSizes = row[6].trim();
+            String eligibility = row[7].trim();
+
             Vector<String> fullRow = new Vector<>();
-            for (String cell : row) fullRow.add(cell.trim());
-            while (fullRow.size() < columns.size()) fullRow.add("N/A");
+            fullRow.add(id);
+            fullRow.add(name);
+            fullRow.add(age);
+            fullRow.add(rank);
+            fullRow.add(startDate);
+            fullRow.add(daysAttended);
+            fullRow.add(gearSizes.isEmpty() ? "N/A" : gearSizes);
+            fullRow.add(eligibility);
+
             model_Practitioners.addRow(fullRow);
         }
 
@@ -84,19 +97,10 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
         tblPractitioners.repaint();
     }
 
-    private String checkRankUpEligibility(String rank, long daysAttended) {
-        switch (rank.toLowerCase()) {
-            case "beginner": return daysAttended >= 90 ? "Yes" : "No";
-            case "intermediate": return daysAttended >= 180 ? "Yes" : "No";
-            case "advanced": return daysAttended >= 365 ? "Yes" : "No";
-            default: return "N/A";
-        }
-    }
-
     public void addPractitioner(String name, int age, String rank, String startDate, String gearSizes) {
         String id = db.generateNextID();
-        long daysAttended = ChronoUnit.DAYS.between(LocalDate.parse(startDate, DateTimeFormatter.ofPattern("dd/MM/yyyy")), LocalDate.now());
-        String eligibility = checkRankUpEligibility(rank, daysAttended);
+        long daysAttended = db.calculateDaysAttended(startDate);
+        String eligibility = db.checkRankUpEligibility(rank, daysAttended);
 
         Vector<Object> row = new Vector<>();
         row.add(id);
@@ -104,7 +108,7 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
         row.add(age);
         row.add(rank);
         row.add(startDate);
-        row.add(daysAttended);
+        row.add(String.valueOf(daysAttended));
         row.add(gearSizes.isEmpty() ? "N/A" : gearSizes);
         row.add(eligibility);
         model_Practitioners.addRow(row);

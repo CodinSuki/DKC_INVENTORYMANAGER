@@ -30,9 +30,9 @@ public class BorrowerDatabase {
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",", -1);
 
-                // Update the status field (index 2) if item matches (assumes index 1 is Type or Name)
+                // Update
                 if (parts.length >= 3 && parts[1].replace("\"", "").trim().equalsIgnoreCase(itemName)) {
-                    parts[2] = "\"" + newStatus + "\""; // index 2 = status
+                    parts[2] = "\"" + newStatus + "\"";
                 }
 
                 // Reconstruct line and write to temp file
