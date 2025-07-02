@@ -23,6 +23,11 @@ public class PractitionerDatabase {
         }
     }
 
+    public void updatePractitioner(String id, String name, String age, String rank, String startDate, String gearSizes){
+
+    }
+
+
     public String generateNextID() {
         int maxNum = 0;
         try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {

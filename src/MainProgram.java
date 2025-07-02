@@ -1,4 +1,3 @@
-    //Kyle Siton
 
     //GUI handler
     import javax.swing.*;

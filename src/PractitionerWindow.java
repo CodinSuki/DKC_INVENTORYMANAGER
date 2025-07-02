@@ -6,7 +6,7 @@ import java.util.Vector;
 import java.util.List;
 
 public class PractitionerWindow extends JFrame implements ActionListener, WindowListener {
-    private JButton btnAdd, btnDelete, btnClose, btnBack;
+    private JButton btnAdd, btnDelete, btnClose, btnBack, btnEdit;
     private JPanel panelButton, panelTable, contentPanel;
     private JTable tblPractitioners;
     private DefaultTableModel model_Practitioners;
@@ -25,16 +25,19 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
     private void initComponents() {
         btnAdd = new JButton("Add");
         btnDelete = new JButton("Delete");
+        btnEdit = new JButton("Edit");
         btnClose = new JButton("Close");
         btnBack = new JButton("Back");
 
         btnAdd.addActionListener(this);
         btnDelete.addActionListener(this);
+        btnEdit.addActionListener(this);
         btnClose.addActionListener(this);
         btnBack.addActionListener(this);
 
         JPanel panelRightButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         panelRightButtons.add(btnAdd);
+        panelRightButtons.add(btnEdit);
         panelRightButtons.add(btnDelete);
         panelRightButtons.add(btnClose);
 
@@ -55,6 +58,15 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
 
         model_Practitioners = new DefaultTableModel(columns, 0);
         tblPractitioners = new JTable(model_Practitioners);
+        tblPractitioners.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        tblPractitioners.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && tblPractitioners.getSelectedRow() != -1) {
+                    editSelectedPractitioner();
+                }
+            }
+        });
 
         panelTable = new JPanel(new BorderLayout());
         panelTable.setBorder(BorderFactory.createTitledBorder("Practitioner List"));
@@ -70,31 +82,12 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
         List<String[]> records = db.loadAllPractitioners();
         for (String[] row : records) {
             if (row.length < 8) continue;
-
-            String id = row[0].trim();
-            String name = row[1].trim();
-            String age = row[2].trim();
-            String rank = row[3].trim();
-            String startDate = row[4].trim();
-            String daysAttended = row[5].trim();
-            String gearSizes = row[6].trim();
-            String eligibility = row[7].trim();
-
             Vector<String> fullRow = new Vector<>();
-            fullRow.add(id);
-            fullRow.add(name);
-            fullRow.add(age);
-            fullRow.add(rank);
-            fullRow.add(startDate);
-            fullRow.add(daysAttended);
-            fullRow.add(gearSizes.isEmpty() ? "N/A" : gearSizes);
-            fullRow.add(eligibility);
-
+            for (int i = 0; i < 8; i++) {
+                fullRow.add(row[i].trim().isEmpty() && i == 6 ? "N/A" : row[i].trim());
+            }
             model_Practitioners.addRow(fullRow);
         }
-
-        tblPractitioners.revalidate();
-        tblPractitioners.repaint();
     }
 
     public void addPractitioner(String name, int age, String rank, String startDate, String gearSizes) {
@@ -116,6 +109,37 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
         db.savePractitioner(id, name, age, rank, startDate, gearSizes);
     }
 
+    public void updatePractitioner(String id, String name, int age, String rank, String startDate, String gearSizes, int rowIndex) {
+        long daysAttended = db.calculateDaysAttended(startDate);
+        String eligibility = db.checkRankUpEligibility(rank, daysAttended);
+
+        model_Practitioners.setValueAt(id, rowIndex, 0);
+        model_Practitioners.setValueAt(name, rowIndex, 1);
+        model_Practitioners.setValueAt(String.valueOf(age), rowIndex, 2);
+        model_Practitioners.setValueAt(rank, rowIndex, 3);
+        model_Practitioners.setValueAt(startDate, rowIndex, 4);
+        model_Practitioners.setValueAt(String.valueOf(daysAttended), rowIndex, 5);
+        model_Practitioners.setValueAt(gearSizes.isEmpty() ? "N/A" : gearSizes, rowIndex, 6);
+        model_Practitioners.setValueAt(eligibility, rowIndex, 7);
+
+        db.updatePractitioner(id, name, String.valueOf(age), rank, startDate, gearSizes);
+    }
+
+    private void editSelectedPractitioner() {
+        int selected = tblPractitioners.getSelectedRow();
+        if (selected >= 0) {
+            String id = model_Practitioners.getValueAt(selected, 0).toString();
+            String name = model_Practitioners.getValueAt(selected, 1).toString();
+            String age = model_Practitioners.getValueAt(selected, 2).toString();
+            String rank = model_Practitioners.getValueAt(selected, 3).toString();
+            String startDate = model_Practitioners.getValueAt(selected, 4).toString();
+            String gearSizes = model_Practitioners.getValueAt(selected, 6).toString();
+            new PractitionerLogin(this, id, name, age, rank, startDate, gearSizes, selected);
+        } else {
+            JOptionPane.showMessageDialog(this, "Select a practitioner to edit.");
+        }
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == btnAdd) {
@@ -129,6 +153,8 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
             } else {
                 JOptionPane.showMessageDialog(this, "Select a row to delete.");
             }
+        } else if (e.getSource() == btnEdit) {
+            editSelectedPractitioner();
         } else if (e.getSource() == btnClose) {
             this.dispose();
         } else if (e.getSource() == btnBack) {
