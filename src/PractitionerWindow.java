@@ -2,11 +2,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.table.DefaultTableModel;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Vector;
 import java.util.List;
 
 public class PractitionerWindow extends JFrame implements ActionListener, WindowListener {
-    private JButton btnAdd, btnDelete, btnClose, btnBack, btnEdit;
+    private JButton btnAdd, btnDelete, btnClose, btnBack, btnEdit, btnAttended;
     private JPanel panelButton, panelTable, contentPanel;
     private JTable tblPractitioners;
     private DefaultTableModel model_Practitioners;
@@ -23,23 +26,19 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
     }
 
     private void initComponents() {
-        btnAdd = new JButton("Add");
-        btnDelete = new JButton("Delete");
-        btnEdit = new JButton("Edit");
-        btnClose = new JButton("Close");
-        btnBack = new JButton("Back");
+        btnAdd = new JButton("Add");btnDelete = new JButton("Delete");
+        btnEdit = new JButton("Edit");btnClose = new JButton("Close");
+        btnBack = new JButton("Back");btnAttended = new JButton("Attended");
 
-        btnAdd.addActionListener(this);
-        btnDelete.addActionListener(this);
-        btnEdit.addActionListener(this);
-        btnClose.addActionListener(this);
-        btnBack.addActionListener(this);
+        btnAttended.addActionListener(this);btnAdd.addActionListener(this);
+        btnDelete.addActionListener(this);btnEdit.addActionListener(this);
+        btnClose.addActionListener(this);btnBack.addActionListener(this);
 
         JPanel panelRightButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        panelRightButtons.add(btnAdd);
-        panelRightButtons.add(btnEdit);
-        panelRightButtons.add(btnDelete);
+        panelRightButtons.add(btnAttended);panelRightButtons.add(btnAdd);
+        panelRightButtons.add(btnEdit);panelRightButtons.add(btnDelete);
         panelRightButtons.add(btnClose);
+
 
         panelButton = new JPanel(new BorderLayout());
         panelButton.setBorder(BorderFactory.createTitledBorder("Actions"));
@@ -47,14 +46,8 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
         panelButton.add(panelRightButtons, BorderLayout.EAST);
 
         columns = new Vector<>();
-        columns.add("ID");
-        columns.add("Name");
-        columns.add("Age");
-        columns.add("Rank");
-        columns.add("Date Started");
-        columns.add("Days Attended");
-        columns.add("Gear Sizes");
-        columns.add("Eligible for Rank Up");
+        columns.add("ID");columns.add("Name");columns.add("Age");columns.add("Rank");columns.add("Date Started");
+        columns.add("Days Attended");columns.add("Gear Sizes");columns.add("Eligible for Rank Up");
 
         model_Practitioners = new DefaultTableModel(columns, 0);
         tblPractitioners = new JTable(model_Practitioners);
@@ -82,11 +75,56 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
         List<String[]> records = db.loadAllPractitioners();
         for (String[] row : records) {
             if (row.length < 8) continue;
+
+            String id = row[0].trim();
+            String name = row[1].trim();
+            String age = row[2].trim();
+            String rank = row[3].trim();
+            String startDate = row[4].trim();
+            String gearSizes = row[6].trim().isEmpty() ? "N/A" : row[6].trim();
+
+            long daysAttended = 0;
+
+            try {
+                daysAttended = Long.parseLong(row[5].trim());
+            } catch (NumberFormatException ignored) {}
+            String eligibility = db.checkRankUpEligibility(rank, daysAttended);
+
             Vector<String> fullRow = new Vector<>();
-            for (int i = 0; i < 8; i++) {
-                fullRow.add(row[i].trim().isEmpty() && i == 6 ? "N/A" : row[i].trim());
-            }
+            fullRow.add(id);
+            fullRow.add(name);
+            fullRow.add(age);
+            fullRow.add(rank);
+            fullRow.add(startDate);
+            fullRow.add(String.valueOf(daysAttended));
+            fullRow.add(gearSizes);
+            fullRow.add(eligibility);
+
             model_Practitioners.addRow(fullRow);
+        }
+
+    }
+
+    public void SetAttended(){
+        int selected = tblPractitioners.getSelectedRow();
+        if (selected >= 0) {
+            String id = model_Practitioners.getValueAt(selected, 0).toString();
+            String daysStr = model_Practitioners.getValueAt(selected, 5).toString();
+            long days = 0;
+            try {
+                days = Long.parseLong(daysStr);
+            } catch (NumberFormatException ignored) {}
+            days++;
+
+            String rank = model_Practitioners.getValueAt(selected, 3).toString();
+            String eligibility = db.checkRankUpEligibility(rank, days);
+
+            model_Practitioners.setValueAt(String.valueOf(days), selected, 5);
+            model_Practitioners.setValueAt(eligibility, selected, 7);
+
+            db.incrementAttendanceByID(id);
+        } else {
+            JOptionPane.showMessageDialog(this, "Select a practitioner first.");
         }
     }
 
@@ -140,6 +178,31 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
         }
     }
 
+    public void process() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter("practitioners.csv"))) {
+            writer.println("ID,Name,Age,Rank,Date Started,Days Attended,Gear Sizes,Eligible for Rank Up");
+            for (int r = 0; r < model_Practitioners.getRowCount(); r++) {
+                StringBuilder sb = new StringBuilder();
+                for (int c = 0; c < model_Practitioners.getColumnCount(); c++) {
+                    String cell = model_Practitioners.getValueAt(r, c).toString();
+                    if (cell.contains(",")) {
+                        cell = "\"" + cell.replace("\"", "\"\"") + "\"";
+                    }
+                    sb.append(cell);
+                    if (c < model_Practitioners.getColumnCount() - 1) {
+                        sb.append(",");
+                    }
+                }
+                writer.println(sb.toString());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == btnAdd) {
@@ -153,11 +216,15 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
             } else {
                 JOptionPane.showMessageDialog(this, "Select a row to delete.");
             }
+        } else if (e.getSource() == btnAttended){
+            SetAttended();
         } else if (e.getSource() == btnEdit) {
             editSelectedPractitioner();
         } else if (e.getSource() == btnClose) {
+            process();
             this.dispose();
         } else if (e.getSource() == btnBack) {
+            process();
             this.dispose();
             new MainProgram();
         }
@@ -168,7 +235,10 @@ public class PractitionerWindow extends JFrame implements ActionListener, Window
     }
 
     @Override public void windowOpened(WindowEvent e) {}
-    @Override public void windowClosing(WindowEvent e) {}
+    @Override public void windowClosing(WindowEvent e) {
+        process();
+        dispose();
+    }
     @Override public void windowClosed(WindowEvent e) {}
     @Override public void windowIconified(WindowEvent e) {}
     @Override public void windowDeiconified(WindowEvent e) {}

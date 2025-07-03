@@ -29,10 +29,15 @@ public class Database {
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] data = line.split(",", -1);
+                // Correct CSV splitting respecting quoted commas
+                String[] data = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+                for (int i = 0; i < data.length; i++) {
+                    data[i] = data[i].trim().replaceAll("^\"|\"$", "").replace("\"\"", "\"");
+                }
+
                 Vector<String> row = new Vector<>();
                 for (int i = 0; i < model.getColumnCount() && i < data.length; i++) {
-                    row.add(data[i].trim().replaceAll("^\"|\"$", "").replace("\"\"", "\""));
+                    row.add(data[i]);
                 }
                 model.addRow(row);
             }
@@ -40,6 +45,7 @@ public class Database {
             errorMessage("Error reading CSV file: " + e.getMessage());
         }
     }
+
 
     public List<String> loadColumn(String filename, int colIndex) {
         List<String> data = new ArrayList<>();

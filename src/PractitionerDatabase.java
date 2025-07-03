@@ -23,9 +23,32 @@ public class PractitionerDatabase {
         }
     }
 
-    public void updatePractitioner(String id, String name, String age, String rank, String startDate, String gearSizes){
+    public void updatePractitioner(String id, String name, String age, String rank, String startDate, String gearSizes) {
+        List<String[]> allRecords = loadAllPractitioners();
 
+        try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_PATH))) {
+            writer.println("ID,Name,Age,Rank,Date Started,Days Attended,Gear Sizes,Eligible for Rank Up");
+            for (String[] record : allRecords) {
+                if (record[0].equals(id)) {
+                    record[1] = name;
+                    record[2] = age;
+                    record[3] = rank;
+                    record[4] = startDate;
+                    record[6] = escapeCommas(gearSizes);
+
+                    long days = 0;
+                    try {
+                        days = Long.parseLong(record[5]);
+                    } catch (NumberFormatException ignored) {}
+                    record[7] = checkRankUpEligibility(rank, days);
+                }
+                writer.println(String.join(",", record));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
+
 
 
     public String generateNextID() {
@@ -46,6 +69,33 @@ public class PractitionerDatabase {
         }
         return "A" + (maxNum + 1);
     }
+
+    public void incrementAttendanceByID(String id) {
+        List<String[]> allRecords = loadAllPractitioners();
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_PATH))) {
+            writer.println("ID,Name,Age,Rank,Date Started,Days Attended,Gear Sizes,Eligible for Rank Up");
+
+            for (String[] record : allRecords) {
+                if (record[0].equals(id)) {
+                    long days = 0;
+                    try {
+                        days = Long.parseLong(record[5]);
+                    } catch (NumberFormatException ignored) {}
+                    days++;
+                    record[5] = String.valueOf(days);
+
+                    String rank = record[3];
+                    String eligibility = checkRankUpEligibility(rank, days);
+                    record[7] = eligibility;
+                }
+                writer.println(String.join(",", record));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void savePractitioner(String id, String name, int age, String rank, String startDate, String gearSizes) {
         long daysAttended = calculateDaysAttended(startDate);

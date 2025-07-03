@@ -1,4 +1,3 @@
-
     //GUI handler
     import javax.swing.*;
     import javax.swing.table.DefaultTableModel;
@@ -315,17 +314,17 @@
 
             try (Scanner sc = new Scanner(new File("kendo_inventory.csv"))) {
                 while (sc.hasNextLine()) {
-                    String[] r = sc.nextLine().split(",", -1);
+                    String line = sc.nextLine();
+
+                    // Splits on commas not inside quotes
+                    String[] r = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+                    for (int i = 0; i < r.length; i++) {
+                        r[i] = r[i].replaceAll("^\"|\"$", "").replace("\"\"", "\"").trim();
+                    }
+
                     if (r.length >= 8) {
                         model_Kendo.addRow(new Object[]{
-                                r[0].replace("\"", "").trim(), // ID
-                                r[1].replace("\"", "").trim(), // Type
-                                r[2].replace("\"", "").trim(), // Status
-                                r[3].replace("\"", "").trim(), // Date Acquired
-                                r[4].replace("\"", "").trim(), // Quantity
-                                r[5].replace("\"", "").trim(), // Condition
-                                r[6].replace("\"", "").trim(), // Location
-                                r[7].replace("\"", "").trim()  // Additional Info
+                                r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7]
                         });
                     }
                 }
@@ -333,6 +332,7 @@
                 ex.printStackTrace();
             }
         }
+
 
 
         private void fillAdditionalFields(String type, String additionalInfo) {
