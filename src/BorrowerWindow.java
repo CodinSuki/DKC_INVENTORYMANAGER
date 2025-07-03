@@ -278,9 +278,6 @@ public class BorrowerWindow extends JFrame implements ActionListener {
         });
     }
 
-
-
-
     private void loadItems() {
         cboItem.removeAllItems();
         itemQty.clear();

@@ -113,7 +113,8 @@ public class PractitionerLogin extends JFrame implements ActionListener {
             String dō = txtDoSize.getText().trim();
             String tare = txtTareSize.getText().trim();
 
-            if (name.isEmpty() || ageStr.isEmpty() || rank.isEmpty() || datePicker.getDate() == null || men.isEmpty() || kote.isEmpty() || dō.isEmpty() || tare.isEmpty()) {
+            if (name.isEmpty() || ageStr.isEmpty() || rank.isEmpty() || datePicker.getDate() == null
+                    || men.isEmpty() || kote.isEmpty() || dō.isEmpty() || tare.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please fill in all fields.");
                 return;
             }

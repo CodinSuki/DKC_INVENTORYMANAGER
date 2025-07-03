@@ -47,21 +47,4 @@ public class Database {
     }
 
 
-    public List<String> loadColumn(String filename, int colIndex) {
-        List<String> data = new ArrayList<>();
-        try (Scanner sc = new Scanner(new File(filename))) {
-            while (sc.hasNextLine()) {
-                String[] parts = sc.nextLine().split(",");
-                if (parts.length > colIndex) {
-                    String value = parts[colIndex].replace("\"","").trim();
-                    data.add(value);
-                }
-            }
-        } catch (IOException e) {
-            errorMessage("DB error: " + e.getMessage());
-        }
-        return data;
-    }
-
-
 }
