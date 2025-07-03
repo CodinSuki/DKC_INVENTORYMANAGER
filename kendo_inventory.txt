@@ -1,5 +1,0 @@
-100#Shinai#Available#18/06/2025#1#Good#Box 1#Length: 29 inch., Weight: 1kg, Material: Bamboo#
-101#Shinai#Borrowed#18/06/2025#1#Fair#Box 1#Length: 28 inch., Weight: 0.90kg, Material: Bamboo, Borrower Name: Josh#
-102#Shinai#Borrowed#18/06/2025#1#Good#Box 1#Length: 29 inch., Weight: 1kg, Material: Bamboo, Borrower Name: Wazaaa#
-103#Men#Available#DD/MM/YYYY#1#Good##Size: SS, Padding Type: Leather#
-104#Kote#Available#18/06/2025#1#New##Glove Size: S#
